@@ -272,7 +272,7 @@ Bitboard KingMoves( Bitboard FriendlyPieces, Bitboard EnemyPieces, signed int sq
 }
 
 bool IsChecked( const BoardRep& board, signed int square ) {
-	Boardrep OccupiedSquares, EnemyDiagonals, EnemyStraights, EnemyPawns, EnemyKnights, EnemyPieces, FriendlyPieces = 0x0000000000000000;
+	Bitboard OccupiedSquares, EnemyKing, EnemyDiagonals, EnemyStraights, EnemyPawns, EnemyKnights, EnemyPieces, FriendlyPieces = 0x0000000000000000;
 	OccupiedSquares = board.layer1 | board.layer2 | board.layer3;
 	EnemyDiagonals |= board.layer1 & board.layer2 & ( ~board.layer3 ); // Bishops of both colors
 	EnemyDiagonals |= board.layer1 & ( ~board.layer2 ) & board.layer3; // Queens
@@ -280,6 +280,7 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 	EnemyStraights |= ( ~board.layer1 ) & ( ~board.layer2 ) & board.layer3; //Rooks
 	EnemyPawns |= board.layer1 & ( ~board.layer2 ) & ( ~board.layer3 );
 	EnemyKnights |= ( ~board.layer1 ) & board.layer2 & ( ~board.layer3 );
+	EnemyKing |= ( ~board.layer1 ) & board.layer2 & board.layer3;
 	if( board.layer0 & ( 1 << square ) ) 
 		EnemyPieces = ~board.layer0;
 	else
@@ -288,6 +289,7 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 	EnemyStraights &= EnemyPieces;
 	EnemyPawns &= EnemyPieces;
 	EnemyKnights &= EnemyPieces;
+	EnemyKing &= EnemyPieces;
 	FriendlyPieces = ~EnemyPieces & OccupiedSquares;
 	if( EnemyDiagonals & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) )
 		return true;
@@ -297,20 +299,125 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 		return true;
 	if( EnemyKnights & KnightMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
+	if( EnemyKings & KingMoves( EnemyPieces, FriendlyPieces, square ) )
+		return true;
 	return false;
 }
 
 Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
+	Bitboard EmptySquares ~= board.layer0 | board.layer1 | board.layer2 | board.layer3;
 	int color = board.layer0 & ( 1 << square );
 	if( posflags & ( WHITE_CHECK | BLACK_CHECK ) )
 		return moves;
 	if( color ) {
-		if( ~posflags & ( BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE ) )
-			return moves;
+		if( posflags & BLACK_KINGSIDE_CASTLE ) {
+			if( ( EmptySquares & ( 1 << ( square + 1 ) ) ) && ( EmptySquares & ( 1 << ( square + 2 ) ) ) ) {
+				if( ! IsChecked( testboard, square + 1 ) ) {
+					if( ! IsChecked( testboard, square + 2 ) )
+						moves |= ( 1 << square + 2 );
+				}
+			}
+		}
+		if( posflags & BLACK_QUEENSIDE_CASTLE ) {
+			if( ( EmptySquares & ( 1 << ( square - 1 ) ) ) && ( EmptySquares & ( 1 << ( square - 2 ) ) ) && ( EmptySquares & ( 1 << ( square - 3 ) ) ) ) {
+				if( ! IsChecked( testboard, square - 1 ) ) {
+					if( ! IsChecked( testboard, square - 2 ) ) 
+						moves |= ( 1 << square - 2 );
+				}
+			}
+		}
 	}
 	else {
-		if( ~posflags & ( WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE ) )
-			return moves;
+		if( posflags & WHITE_KINGSIDE_CASTLE ) {
+			if( ( EmptySquares & ( 1 << ( square + 1 ) ) ) && ( EmptySquares & ( 1 << ( square + 2 ) ) ) ) {
+				if( ! IsChecked( testboard, square + 1 ) ) {
+					if( ! IsChecked( testboard, square + 2 ) )
+						moves |= ( 1 << square + 2 );
+				}
+			}
+		}
+		if( posflags & WHITE_QUEENSIDE_CASTLE ) {
+			if( ( EmptySquares & ( 1 << ( square - 1 ) ) ) && ( EmptySquares & ( 1 << ( square - 2 ) ) ) && ( EmptySquares & ( 1 << ( square - 3 ) ) ) ) {
+				if( ! IsChecked( testboard, square - 1 ) ) {
+					if( ! IsChecked( testboard, square - 2 ) ) 
+						moves |= ( 1 << square - 2 );
+				}
+			}
+		}
 	}
-	if( 
+	return moves;
+}
+
+int LS1BIndice( Bitboard ls1b ) {	/// Isolated LS1B only
+	const int arr[ 67 ] = {
+		-1, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16,
+		59, 41, 19, 24, 54, 4, -1, 13, 10, 17, 62,
+		60, 28, 42, 30, 20, 51, 25, 44, 55, 47, 5, 
+		32, -1, 38, 14, 22, 11, 58, 18, 53, 63, 9,
+		61, 27, 29, 50, 43, 46, 31, 37, 21, 57, 52,
+		8, 26, 49, 45, 36, 56, 7, 48, 35, 6, 34, 33
+	};
+	return arr[ ls1b % 67 ];
+}
+
+MoveNode* AddMoves( MoveNode* p, Bitboard moves, int square ) {
+	MoveRep r = 0x0000;
+	int end = 0;
+	while( moves != 0x0000000000000000 ) {
+		end = LS1BIndice( ( moves & ( moves - 1 ) ) ^ moves );
+		p = AddNode( p, square | ( end << 6 ) );
+		moves &= moves - 1;
+	}
+	return p;
+}
+
+MoveNode* AddNode( MoveNode* p, MoveRep move ) {
+	p->move = move;
+	p->nxt = new MoveNode;
+	return p->nxt;
+}
+
+MoveNode* GenMoves( const Position& pos, int color ) {
+	/*
+	 * Notes:
+	 * Generate moves
+	 * Add special flags to special moves
+	 * Test moves p->nxt ( don't test root node )
+	 * Test root node
+	 * return movelist
+	 */
+	MoveNode* movelist = new MoveNode;
+	MoveNode* p = movelist;
+	const BoardRep board = pos.board;
+	const BitFlags posflags = pos.flags;
+	int piece, type;
+	Position testpos = pos;
+	Bitboard EnemyKing = ( ~board.layer1 ) | board.layer2 | board.layer3;
+	Bitboard EnemyPieces, FriendlyPieces;
+	Bitboard OccupiedSquares = board.layer0 | board.layer1 | board.layer2 | board.layer3;
+	if( color ) 
+		EnemyPieces = OccupiedSquares & ( ~board.layer0 );
+	else
+		EnemyPieces = OccupiedSquares & board.layer0;
+	EnemyKing &= EnemyPieces;
+	FriendlyPieces = OccupiedSquares & ( ~EnemyPieces );
+	FriendlyPieces |= EnemyKing;	// Prevents pieces from capturing a king
+	for( int i = 0; i < 64; i++ ) {
+		piece = GetPiece( board, i );
+		type = piece / 2;
+		if( ( piece % 2 ) == color ) {
+			if( type == 1 )
+				AddMoves( p, PawnMoves( EnemyPieces, FriendlyPieces, i, color, posflags ), i );
+			else if( type == 2 )
+				AddMoves( p, KnightMoves( EnemyPieces, FriendlyPieces, i ), i );
+			else if( type == 3 )
+				AddMoves( p, BishopMoves( EnemyPieces, FriendlyPieces, i ), i );
+			else if( type == 4 )
+				AddMoves( p, RookMoves( EnemyPieces, FriendlyPieces, i ), i );
+			else if( type == 5 )
+				AddMoves( p, QueenMoves( EnemyPieces, FriendlyPieces, i ), i );
+			else if( type == 6 )
+				AddMoves( p, KingMoves( EnemyPieces, FriendlyPieces, i ), i );
+		}
+	}
