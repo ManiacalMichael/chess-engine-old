@@ -467,13 +467,14 @@ void RemoveNextNode( MoveNode* p ) {
 	p->nxt = q;
 }
 
-MoveNode* GenMoves( const Position& pos, int color ) {
+MoveNode* GenMoves( Position& pos, int color ) {
 	/*
 	 * Notes:
 	 * Generate moves
 	 * Add special flags to special moves
 	 * Test moves p->nxt ( don't test root node )
 	 * Test root node
+	 * Check for checkmate or draw for eval function
 	 * return movelist
 	 */
 	MoveNode* movelist = new MoveNode;
@@ -566,6 +567,16 @@ MoveNode* GenMoves( const Position& pos, int color ) {
 	if( testpos.flags & FriendlyCheck ) {
 		movelist = movelist->nxt;
 		delete p;
+	}
+	if( movelist == NULL ) {
+		pos.flags |= GAME_OVER;
+		if( !( pos.flags & ( WHITE_CHECK | BLACK_CHECK ) ) )
+			pos.flags |= GAME_DRAWN;
+	}
+	if( !( pos.flags & GAME_OVER ) ) {
+		if( pos.fiftymove >= 100 ) {
+			pos.flags |= GAME_DRAWN;
+		}
 	}
 	return movelist;
 }
