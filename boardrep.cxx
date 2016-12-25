@@ -112,6 +112,7 @@ const MoveRep START_SQUARE_MASK = 0x003F;
 const MoveRep END_SQUARE_MASK = 0x0FC0;
 
 struct MoveNode {
+	MoveNode() : nxt( NULL ) {}
 	MoveRep move;
 	Move* nxt;
 };

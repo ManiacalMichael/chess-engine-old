@@ -349,6 +349,87 @@ Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflag
 	return moves;
 }
 
+void MakeMove( Position pos, MoveRep move ) {
+	/*
+	 * notes:
+	 * 1. Set end square
+	 * 2. Perform ep capture
+	 * 3. Clear ep squares
+	 * 4. Set ep square
+	 * 5. Clear start square
+	 * 6. Increment counters
+	 * 7. Set check status
+	 * 8. Change castle status
+	 * 9. Toggle player
+	 */
+	BoardRep& board = &pos.board;
+	int color, kingpos, king;
+	int start = move & START_SQUARE_MASK;
+	int end = ( move & END_SQUARE_MASK ) >> 6;
+	if( pos.flags & WHITE_TO_MOVE )
+		color = 0;
+	else
+		color = 1;
+	if( ( GetPiece( board, start ) / 2 ) == 1 )
+		pos.fiftymove = 0;
+	else if( GetPiece( board, start ) != NO_PIECE )
+		pos.fiftymove = 0;
+	else
+		pos.fiftymove++;
+	if( move & PROMOTION_TO_KNIGHT ) 
+		SetPiece( board, end, WHITE_KNIGHT + color );
+	else if( move & PROMOTION_TO_QUEEN )
+		SetPiece( board, end, WHITE_QUEEN + color );
+	else
+		SetPiece( board, end, GetPiece( board, start ) );
+	if( move & EP_CAPTURE ) {
+		if( color )	// Capturing white pawn
+			SetPiece( board, end + 8, NO_PIECE );
+		else
+			SetPiece( board, end - 8, NO_PIECE );
+	}
+	pos.flags &= ~EN_PASSANT;
+	if( ( GetPiece( board, start ) / 2 ) == 1 ) {
+		if( end == ( start + 16 ) ) {	// Set white ep
+			pos.flags |= EN_PASSANT;
+			pos.flags |= ( ( end - 8 ) << 1 );
+		}
+		else if( end == ( start - 16 ) ) {
+			pos.flags |= EN_PASSANT;
+			pos.flags |= ( ( end + 8 ) << 1 );
+		}
+	}
+	SetPiece( board, start, NO_PIECE );
+	king = WHITE_KING + color;
+	for( int i = 0; i < 64; i++ ) {
+		if( GetPiece( board, i ) == king )
+			kingpos = i;
+	}
+	pos.flags &= ~( WHITE_CHECK | BLACK_CHECK );
+	if( IsChecked( board, king ) ) {
+		if( color )
+			pos.flags |= BLACK_CHECK;
+		else
+			pos.flags |= WHITE_CHECK;
+	}
+	if( pos.flags & 0x0780 ) {	// 0x0780 is all the castle status bits
+		if( start == 4 )	// 4 = e1
+			pos.flags &= ~( WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE );
+		else if( start == 0 )	// 0 = a1
+			pos.flags &= ~WHITE_QUEENSIDE_CASTLE;
+		else if( start == 7 )	// 7 = h1
+			pos.flags &= ~WHITE_KINGSIDE_CASTLE;
+		else if( start == 60 )	// 60 = e8
+			pos.flags &= ~( BLACK_KINGSIDE_CASTLE | BLACK_QUEENSIDE_CASTLE );
+		else if( start == 56 )	// 56 = a8
+			pos.flags &= ~BLACK_QUEENSIDE_CASTLE;
+		else if( start == 63 )	// 63 = h8
+			pos.flags &= ~BLACK_KINGSIDE_CASTLE;
+	}
+	pos.moves++;
+	pos.flags ^= WHITE_TO_MOVE;
+}
+
 int LS1BIndice( Bitboard ls1b ) {	/// Isolated LS1B only
 	const int arr[ 67 ] = {
 		-1, 0, 1, 39, 2, 15, 40, 23, 3, 12, 16,
@@ -378,6 +459,14 @@ MoveNode* AddNode( MoveNode* p, MoveRep move ) {
 	return p->nxt;
 }
 
+void RemoveNextNode( MoveNode* p ) {
+	MoveNode* q, r = p->nxt;
+	if( q->nxt != NULL )
+		q = q->nxt;
+	delete r;
+	p->nxt = q;
+}
+
 MoveNode* GenMoves( const Position& pos, int color ) {
 	/*
 	 * Notes:
@@ -388,7 +477,7 @@ MoveNode* GenMoves( const Position& pos, int color ) {
 	 * return movelist
 	 */
 	MoveNode* movelist = new MoveNode;
-	MoveNode* p = movelist;
+	MoveNode* p, q = movelist;
 	const BoardRep board = pos.board;
 	const BitFlags posflags = pos.flags;
 	int piece, type;
@@ -396,10 +485,15 @@ MoveNode* GenMoves( const Position& pos, int color ) {
 	Bitboard EnemyKing = ( ~board.layer1 ) | board.layer2 | board.layer3;
 	Bitboard EnemyPieces, FriendlyPieces;
 	Bitboard OccupiedSquares = board.layer0 | board.layer1 | board.layer2 | board.layer3;
-	if( color ) 
+	BitFlags FriendlyCheck;
+	if( color ) {
 		EnemyPieces = OccupiedSquares & ( ~board.layer0 );
-	else
+		FriendlyCheck = BLACK_CHECK;
+	}
+	else {
 		EnemyPieces = OccupiedSquares & board.layer0;
+		FriendlyCheck = WHITE_CHECK;
+	}
 	EnemyKing &= EnemyPieces;
 	FriendlyPieces = OccupiedSquares & ( ~EnemyPieces );
 	FriendlyPieces |= EnemyKing;	// Prevents pieces from capturing a king
@@ -421,3 +515,57 @@ MoveNode* GenMoves( const Position& pos, int color ) {
 				AddMoves( p, KingMoves( EnemyPieces, FriendlyPieces, i ), i );
 		}
 	}
+	if( color ) 
+		AddMoves( p, CastleMoves( board, 60, posflags ), 60 );
+	else
+		AddMoves( p, CastleMoves( board, 4, posflags ), 4 );
+	p = movelist;
+	while( p != NULL ) {
+		if( ( GetPiece( board, ( p->move ) & START_SQUARE_MASK ) / 2 ) == 1 ) {
+			if( color ) {
+				if( ( ( ( p->move & END_SQUARE_MASK ) >> 6 ) / 8 ) == 0 ) {
+					q = new MoveNode;
+					q->move = p->move | PROMOTION_TO_KNIGHT;
+					p->move |= PROMOTION_TO_QUEEN;
+					q->nxt = p->nxt;
+					p->nxt = q;
+				}
+			}
+			else {
+				if( ( ( ( p->move & END_SQUARE_MASK ) >> 6 ) / 8 ) == 7 ) {
+					q = new MoveNode;
+					q->move = p->move | PROMOTION_TO_KNIGHT;
+					p->move |= PROMOTION_TO_QUEEN;
+					q->nxt = p->nxt;
+					p->nxt = q;
+				}
+			}
+			if( ( ( p->move & END_SQUARE_MASK ) >> 6 ) == ( posflags & EP_SQUARE_MASK ) ) 
+				p->move |= EP_CAPTURE;
+		}
+		else if( ( GetPiece( board, p->move & START_SQUARE_MASK ) / 2 ) == 6 ) {
+			if( ( ( p->move & END_SQUARE_MASK ) >> 6 ) == ( p->move & START_SQUARE_MASK ) + 2 )
+				p->move |= CASTLE_MOVE;
+			else if( ( ( p->move & END_SQUARE_MASK ) >> 6 ) == ( p->move & START_SQUARE_MASK ) - 2 )
+				p->move |= CASTLE_MOVE;
+		}
+		p = p->nxt;
+	}
+	p = movelist;
+	while( p->nxt != NULL ) {
+		q = p->nxt;
+		MakeMove( testpos, q->move );
+		if( testpos.flags & FriendlyCheck )
+			DeleteNextNode( p );
+		testpos = pos;
+		p = p->nxt;
+	}
+	testpos = pos;
+	p = movelist;
+	MakeMove( testpos, movelist->move );
+	if( testpos.flags & FriendlyCheck ) {
+		movelist = movelist->nxt;
+		delete p;
+	}
+	return movelist;
+}
