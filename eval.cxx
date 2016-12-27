@@ -26,7 +26,7 @@
  * 	Backward pawns bad
  */
 
-const signed int PawnRankValue[ 8 ] = { -1, 100, 105, 110, 115, 120, 125, -1 };
+const signed int PawnRankTable[ 8 ] = { -1, 100, 105, 110, 115, 120, 125, -1 };
 
 const signed int KnightPawnTable[ 17 ] = { 300, 306, 312, 318, 324, 330, 336, 342,
 				348, 354, 360, 366, 378, 384, 390, 396, 402 };
@@ -171,7 +171,7 @@ signed int PawnStructure( Bitboard skeleton ) {
 	return eval;
 }
 
-signed int Evaluate( const Position& pos, int color, int mobility ) {
+signed int Evaluate( const Position& pos, int mobility ) {
 	BoardRep& board = &pos.board;
 	BoardRep notboard;
 	Bitboard EnemyPawns, FriendlyPawns, EnemyKnights, FriendlyKnights, EnemyBishops, FriendlyBishops,
@@ -179,18 +179,10 @@ signed int Evaluate( const Position& pos, int color, int mobility ) {
 		 EnemyPieces, FriendlyPieces, OccupiedSquares;
 	int pawns, fbishops, ebishops;
 	signed int eval = 0;
-	if( color ) {
-		if( ( pos.flags & BLACK_CHECK ) && ( pos.flags & GAME_OVER ) )	// Checkmate
-			return -12288;
-		if( ( pos.flags & WHITE_CHECK ) && ( pos.flags & GAME_OVER ) )
-			return +12288;
-	}
-	else {
-		if( ( pos.flags & WHITE_CHECK ) && ( pos.flags & GAME_OVER ) )
-			return -12288;
-		if( ( pos.flags & BLACK_CHECK ) && ( pos.flags & GAME_OVER ) )
-			return +12288;
-	}
+	if( ( pos.flags & WHITE_CHECK ) && ( pos.flags & GAME_OVER ) )
+		return -12288;
+	if( ( pos.flags & BLACK_CHECK ) && ( pos.flags & GAME_OVER ) )
+		return +12288;
 	if( pos.flags & GAME_DRAWN )
 		return 0;
 	notboard.layer0 ~= board.layer0;
@@ -199,10 +191,7 @@ signed int Evaluate( const Position& pos, int color, int mobility ) {
 	notboard.layer3 ~= board.layer3;
 	EnemyPieces = board.layer0 | board.layer1 | board.layer2 | board.layer3;
 	OccupiedSquares = EnemyPieces;
-	if( color )
-		EnemyPieces &= notboard.layer0;
-	else
-		EnemyPieces &= board.layer0;
+	EnemyPieces &= board.layer0;
 	FriendlyPieces = OccupiedSquare & ( ~EnemyPieces );
 	EnemyPawns = board.layer1 & notboard.layer2 & notboard.layer3;
 	EnemyKnights = notboard.layer1 & board.layer2 & notboard.layer3;
@@ -234,7 +223,7 @@ signed int Evaluate( const Position& pos, int color, int mobility ) {
 	eval -= BishopTable[ ebishops ];
 	eval += RookPawnTable[ pawns ] * PopCount( FriendlyRooks );
 	eval -= RookPawnTable[ pawns ] * PopCount( EnemyRooks );
-	eval += 1150 * PopCount( FreindlyQueens );
+	eval += 1150 * PopCount( FriendlyQueens );
 	eval -= 1150 * PopCount( EnemyQueens );
 	eval += RookEval( FriendlyRooks, EnemyRooks, OccupiedSquares );
 	eval += PawnStructure( FriendlyPawns );
@@ -244,14 +233,10 @@ signed int Evaluate( const Position& pos, int color, int mobility ) {
 		eval -= PopCount( EnemyKing & CenterSquares ) * 50;
 	}
 	eval += 5 * mobility;
-	if( color ) {
-		if( pos.flags & ( BLACK_QUEENSIDE_CASTLE | BLACK_KINGSIDE_CASTLE ) )
-			eval -= 20;
-	}
-	else {
-		if( pos.flags & ( WHITE_QUEENSIDE_CASTLE | WHITE_KINGSIDE_CASTLE ) )
-			eval -= 20;
-	}
+	if( pos.flags & ( BLACK_QUEENSIDE_CASTLE | BLACK_KINGSIDE_CASTLE ) )
+		eval += 20;
+	if( pos.flags & ( WHITE_QUEENSIDE_CASTLE | WHITE_KINGSIDE_CASTLE ) )
+		eval -= 20;
 	return eval;
 }
 

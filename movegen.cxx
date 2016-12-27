@@ -467,7 +467,16 @@ void RemoveNextNode( MoveNode* p ) {
 	p->nxt = q;
 }
 
-MoveNode* GenMoves( Position& pos, int color ) {
+void DeleteMoveList( MoveNode* movelist ) {
+	MoveNode* p = movelist;
+	while( movelist != NULL ) {
+		p = movelist->nxt;
+		delete movelist;
+		movelist = p;
+	}
+}
+
+MoveNode* GenMoves( Position& pos ) {
 	/*
 	 * Notes:
 	 * Generate moves
@@ -481,12 +490,16 @@ MoveNode* GenMoves( Position& pos, int color ) {
 	MoveNode* p, q = movelist;
 	const BoardRep board = pos.board;
 	const BitFlags posflags = pos.flags;
-	int piece, type;
+	int piece, type, color;
 	Position testpos = pos;
 	Bitboard EnemyKing = ( ~board.layer1 ) | board.layer2 | board.layer3;
 	Bitboard EnemyPieces, FriendlyPieces;
 	Bitboard OccupiedSquares = board.layer0 | board.layer1 | board.layer2 | board.layer3;
 	BitFlags FriendlyCheck;
+	if( pos.flags & WHITE_TO_MOVE )
+		color = 0;
+	else
+		color = 1;
 	if( color ) {
 		EnemyPieces = OccupiedSquares & ( ~board.layer0 );
 		FriendlyCheck = BLACK_CHECK;
