@@ -1,29 +1,22 @@
 /*
- * notes for evaluation:
- * Pawns
- * 	More valuable closer to end of board
- * Knights
- * 	More valuable the more pawns there are
- * 	More valuable in center
- * Bishops
- * 	More valuable in pairs
- * Penalties for undefended minor pieces
- * 	Not sure how to implement this w/o practically redoing movegen
- * Rooks
- * 	More valuable the less pawns there are
- * 	More valuable if on open rank/file
- * Queen
- * 	Important
- * King
- * 	King centralization in endgame
- * Castling
- * 	Penalty for uncastled king
- * Mobility
- * Pawn Structure
- * 	Connected pawns good
- * 	Doubled pawns bad
- * 	Isolated pawns bad
- * 	Backward pawns bad
+ * * * * * eval.cxx
+ * Position evaluation function
+ ** Considerations for position evaluation
+ * Pawns are more valuable closer to the end of the board
+ * Knights are more valuable the more pawns there are
+ * Knights are more valuable in the center of the board
+ * Bishops are each more valuable when they are in pairs
+ * Rooks are more valuable the less pawns there are
+ * Rooks are more valuable on empty ranks/files
+ * Rooks are more valuable on ranks/files with other friendly rooks
+ * In the endgame, kings are more valuable in the center
+ * Queens are almost always more valuable than a rook pair
+ * Castling has a bonus
+ * Pawn Structure:
+ * 	Connected pawns are good
+ * 	Doubled pawns are very bad
+ * 	Isolated pawns are bad
+ * 	Backwards pawns are bad
  */
 
 const signed int PawnRankTable[ 8 ] = { -1, 100, 105, 110, 115, 120, 125, -1 };
@@ -98,6 +91,7 @@ signed int EvalPawns( Bitboard FriendlyPawns, Bitboard EnemyPawns, int color ) {
 signed int EvalRooks( Bitboard FriendlyRooks, Bitboard EnemyRooks, Bitboard OccupiedSquares ) {
 	signed int eval = 0;
 	int square;
+	OccupiedSquares &= ~FriendlyRooks;
 	while( FriendlyRooks != 0x0000000000000000 ) {
 		square = LS1BIndice( ( FriendlyRooks & ( FriendlyRooks - 1 ) ) ^ FriendlyRooks );
 		if( !( OccupiedSquares & EmptyRank[ square / 8 ] ) ) 
@@ -171,7 +165,7 @@ signed int PawnStructure( Bitboard skeleton ) {
 	return eval;
 }
 
-signed int Evaluate( const Position& pos, int mobility ) {
+signed int Evaluate( Position& pos, int mobility ) {
 	BoardRep& board = &pos.board;
 	BoardRep notboard;
 	Bitboard EnemyPawns, FriendlyPawns, EnemyKnights, FriendlyKnights, EnemyBishops, FriendlyBishops,
@@ -179,10 +173,16 @@ signed int Evaluate( const Position& pos, int mobility ) {
 		 EnemyPieces, FriendlyPieces, OccupiedSquares;
 	int pawns, fbishops, ebishops;
 	signed int eval = 0;
-	if( ( pos.flags & WHITE_CHECK ) && ( pos.flags & GAME_OVER ) )
-		return -12288;
-	if( ( pos.flags & BLACK_CHECK ) && ( pos.flags & GAME_OVER ) )
-		return +12288;
+	if( pos.flags & GAME_OVER ) {
+		if( pos.flags & WHITE_CHECK ) 
+			return -12288;
+		if( pos.flags & BLACK_CHECK ) 
+			return +12288;
+	}
+	else {
+		if( pos.fiftymove >= 100 )
+			pos.flags |= GAME_DRAWN;
+	}
 	if( pos.flags & GAME_DRAWN )
 		return 0;
 	notboard.layer0 ~= board.layer0;

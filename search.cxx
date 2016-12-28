@@ -1,9 +1,25 @@
+/*
+ * * * * * search.cxx
+ * Search function
+ ** MiniMax + Alpha Beta Pruning
+ * White selects highest scoring moves
+ * Black selects lowest scoring moves
+ * Alpha is the minimum score accepted by white parent nodes
+ * Beta is the maximum score accepted by black parent nodes
+ * When Beta is less than Alpha no new nodes examined will be accepted by
+ *   parent nodes and search terminates on that node
+ *
+ ** Search Function
+ * The search function is a special case of MiniMax that keeps track of
+ * which possible move scores the highest
+ *
+ */
 
 const signed int INFINITE = 32767;
 
 const signed int NEG_INFINITE = -32768;
 
-signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE, int depth = 0, bool IsMaximiser, Position pos ) {
+signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE, int depth = 0, bool IsMaximiser, const Position& pos ) {
 	int moves = 0;
 	signed int eval, best;
 	MoveNode* movelist = GenMoves( pos );
@@ -50,7 +66,7 @@ signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE,
 	return best;
 }
 
-MoveRep Search( Position& pos, int depth ) {
+MoveRep Search( const Position& pos, int depth ) {
 	MoveNode* movelist = GenMoves( pos );
 	MoveNode* bestmove, p;
 	int moves = 0;
@@ -72,6 +88,7 @@ MoveRep Search( Position& pos, int depth ) {
 			eval = MiniMax( alpha, beta, depth - 1, false, testpos );
 			if( eval > best ) {
 				best = eval;
+				bestmove = p;
 				if( eval > alpha )
 					alpha = eval;
 			}
@@ -87,6 +104,7 @@ MoveRep Search( Position& pos, int depth ) {
 			eval = MiniMax( alpha, beta, depth - 1, true, testpos );
 			if( eval < best ) {
 				best = eval;
+				bestmove = p;
 				if( eval < beta )
 					beta = eval;
 			}

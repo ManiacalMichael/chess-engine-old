@@ -1,3 +1,29 @@
+/*
+ * * * * * moves.cxx
+ * Move representation and linked lists
+ ** Move representation
+ * Move rep is 16 bits:
+ *   6 bits -> start square
+ *   6 bits -> end square
+ *   4 bits -> Special move flags
+ *
+ ** Making Moves
+ * Completely making a move from one position to another requires setting
+ * the proper flags on the position and making sure the right pieces are moved
+ * or captured for special moves:
+ *  1. Reset or increment the fifty move counter
+ *  2. Set the end square to a queen/knight for promotions
+ *  3. If capturing e.p. remove the captured pawn from the board
+ *  4. Clear e.p. capture flag
+ *  5. Set e.p. flag and square for two-rank pawn moves
+ *  6. Clear prior check status
+ *  7. Get new check status
+ *  8. Disable castling for moves from king and rook start squares
+ *  9. Increment move counter
+ *  10. Switch players
+ *
+ */
+
 typedef short unsigned int MoveRep;
 /*
  * MoveRep bit values
@@ -25,18 +51,6 @@ struct MoveNode {
 
 
 void MakeMove( Position pos, MoveRep move ) {
-	/*
-	 * notes:
-	 * 1. Set end square
-	 * 2. Perform ep capture
-	 * 3. Clear ep squares
-	 * 4. Set ep square
-	 * 5. Clear start square
-	 * 6. Increment counters
-	 * 7. Set check status
-	 * 8. Change castle status
-	 * 9. Toggle player
-	 */
 	BoardRep& board = &pos.board;
 	int color, kingpos, king;
 	int start = move & START_SQUARE_MASK;

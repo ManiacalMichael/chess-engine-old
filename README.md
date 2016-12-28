@@ -5,6 +5,7 @@ Baby's first real project: C++ chess engine
 * No fancy stuff yet
 
 # to-do
+* Unit testing
 * CLI
 * Xboard module
 
