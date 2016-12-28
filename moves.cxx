@@ -50,8 +50,9 @@ struct MoveNode {
 };
 
 
-void MakeMove( Position pos, MoveRep move ) {
-	BoardRep& board = &pos.board;
+void MakeMove( Position& pos, MoveRep move ) {
+	BoardRep& board = 
+	pos.board;
 	int color, kingpos, king;
 	int start = move & START_SQUARE_MASK;
 	int end = ( move & END_SQUARE_MASK ) >> 6;
