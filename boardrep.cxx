@@ -14,7 +14,7 @@
  *             2 A3  B3  C3  D3  E3  F3  G3  H3
  *             1 A2  B2  C2  D2  E2  F2  G2  H2
  *           | 0 A1  B1  C1  D1  E1  F1  G1  H1
- *         Indice / 8
+ *        Indice / 8
  * The bit for a specific square can be manipulated by creating a bitboard with only
  * that specific square set by shifting a 1 <square> spaces ( assuming 64-bit int )
  * Set bit x : bb |= 1 << x
