@@ -70,10 +70,32 @@ const int WHITE_QUEEN = 10;
 const int BLACK_QUEEN = 11;
 const int WHITE_KING = 12;
 const int BLACK_KING = 13;
+/* Piece values for each layer:
+ * Bits	  3210 
+ * 	0 0000 Empty square
+ * 	1 0001 Unused
+ * 	2 0010 White Pawn
+ * 	3 0011 Black Pawn
+ * 	4 0100 White Knight
+ * 	5 0101 Black Knight
+ * 	6 0110 White Bishop
+ * 	7 0111 Black Bishop
+ * 	8 1000 White Rook
+ * 	9 1001 Black Rook
+ * 	A 1010 White Queen
+ * 	B 1011 Black Queen
+ * 	C 1100 White King
+ * 	D 1101 Black King
+ */
 
 typedef long long unsigned int Bitboard;
 
-struct BoardRep;
+struct BoardRep {
+	Bitboard layer0;
+	Bitboard layer1;
+	Bitboard layer2;
+	Bitboard layer3;
+};
 
 const BoardRep START_BOARD = {
 	0xFFFF000000000000,
@@ -121,7 +143,12 @@ const BitFlags GAME_DRAWN = 0x4000;
 
 const BitFlags WHITE_TO_MOVE = 0x8000;
 
-struct Position;
+struct Position {
+	BoardRep board;
+	BitFlags flags;
+	short unsigned moves;
+	short unsigned fiftymove;
+};
 
 const Position START_POSITION = {
 	{
@@ -137,6 +164,6 @@ const Position START_POSITION = {
 
 void SetPiece( BoardRep&, int, int );
 
-int GetPiece( BoardRep&, int );
+int GetPiece( const BoardRep&, int );
 
 #endif

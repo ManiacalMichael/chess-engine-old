@@ -98,6 +98,8 @@
  * If the game is over and there is no check the game is drawn (stalemate)
  */
  
+#include "movegen.hxx"
+
 Bitboard PawnMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, int square, int color, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
 	Bitboard EmptySquares = ~( EnemyPieces | FreindlyPieces );
