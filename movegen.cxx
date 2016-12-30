@@ -98,6 +98,8 @@
  * If the game is over and there is no check the game is drawn (stalemate)
  */
  
+#include "movegen.hxx"
+
 Bitboard PawnMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, int square, int color, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
 	Bitboard EmptySquares = ~( EnemyPieces | FreindlyPieces );
@@ -105,35 +107,35 @@ Bitboard PawnMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, int square, i
 	int rank = square / 8;
 	int epsquare = ( posflags & EP_MASK ) >> 1;
 	if( color ) {
-		if( ( rank == 6 ) && ( ( 1 << ( square - 8 ) ) & EmptySquares ) )
-			moves |= ( 1 << ( square - 16 ) ) & EmptySquares;
+		if( ( rank == 6 ) && ( ( 1LL << ( square - 8 ) ) & EmptySquares ) )
+			moves |= ( 1LL << ( square - 16 ) ) & EmptySquares;
 		if( ( 63 >= ( square - 9 ) >= 0 ) && ( file != 0 ) )
-			moves |= ( 1 << ( square - 9 ) ) & EnemyPieces;
+			moves |= ( 1LL << ( square - 9 ) ) & EnemyPieces;
 		if( ( 63 >= ( square - 7 ) >= 0 ) && ( file != 7 ) )
-			moves |= ( 1 << ( square - 7 ) ) & EnemyPieces;
+			moves |= ( 1LL << ( square - 7 ) ) & EnemyPieces;
 		if( 63 >= ( square - 8 ) >= 0 )
-			moves |= ( 1 << ( square - 8 ) ) & EmptySquares;
+			moves |= ( 1LL << ( square - 8 ) ) & EmptySquares;
 		if( posflags & EN_PASSANT ) {
 			if( ( ( square - 9 ) == epsquare ) && ( file != 0 ) )
-				moves |= ( 1 << ( square - 9 ) );
+				moves |= ( 1LL << ( square - 9 ) );
 			if( ( ( square - 7 ) == epsquare ) && ( file != 7 ) )
-				moves |= ( 1 << ( square - 7 ) );
+				moves |= ( 1LL << ( square - 7 ) );
 		}
 	}
 	else {
-		if( ( rank == 1 ) && ( ( 1 << ( square + 8 ) ) & EmptySquares ) )
-			moves |= ( 1 << ( square + 16 ) ) & EmptySquares;
+		if( ( rank == 1 ) && ( ( 1LL << ( square + 8 ) ) & EmptySquares ) )
+			moves |= ( 1LL << ( square + 16 ) ) & EmptySquares;
 		if( ( 63 >= ( square + 9 ) >= 0 ) && ( file != 7 ) )
-			moves |= ( 1 << ( square + 9 ) ) & EnemyPieces;
+			moves |= ( 1LL << ( square + 9 ) ) & EnemyPieces;
 		if( ( 63 >= ( square + 7 ) >= 0 ) && ( file != 0 ) )
-			moves |= ( 1 << ( square + 7 ) ) & EnemyPieces;
+			moves |= ( 1LL << ( square + 7 ) ) & EnemyPieces;
 		if( 63 >= ( square + 8 ) >= 0 )
-			moves |= ( 1 << ( square + 8 ) ) & EmptySquares;
+			moves |= ( 1LL << ( square + 8 ) ) & EmptySquares;
 		if( posflags & EN_PASSANT ) {
 			if( ( ( square + 9 ) == epsquare ) && ( file != 7 ) )
-				moves |= ( 1 << ( square + 9 ) );
+				moves |= ( 1LL << ( square + 9 ) );
 			if( ( ( square + 7 ) == epsquare ) && ( file != 0 ) )
-				moves |= ( 1 << ( square + 7 ) );
+				moves |= ( 1LL << ( square + 7 ) );
 		}
 	}
 	return moves;
@@ -146,27 +148,27 @@ Bitboard KnightMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, int square 
 	int file = square % 8;
 	if( rank < 6 ) { // Go up
 		if( file != 7 ) // Go right
-			moves |= ( 1 << ( square + 17 ) ) & Squares;
+			moves |= ( 1LL << ( square + 17 ) ) & Squares;
 		if( file != 0 )
-			moves |= ( 1 << ( square + 15 ) ) & Squares;
+			moves |= ( 1LL << ( square + 15 ) ) & Squares;
 	}
 	if( rank > 1 ) { // Go Down
 		if( file != 7 )
-			moves |= ( 1 << ( square - 15 ) ) & Squares;
+			moves |= ( 1LL << ( square - 15 ) ) & Squares;
 		if( file != 0 )
-			moves |= ( 1 << ( square - 17 ) ) & Squares;
+			moves |= ( 1LL << ( square - 17 ) ) & Squares;
 	}
 	if( file < 6 ) { // Go Right
 		if( rank != 7 ) // Go Up
-			moves |= ( 1 << ( square + 10 ) ) & Squares;
+			moves |= ( 1LL << ( square + 10 ) ) & Squares;
 		if( rank != 0 )
-			moves |= ( 1 << ( square - 6 ) ) & Squares;
+			moves |= ( 1LL << ( square - 6 ) ) & Squares;
 	}
 	if( file > 1 ) { // Go Left
 		if( rank != 7 ) // Go Up
-			moves |= ( 1 << ( square + 6 ) ) & Squares;
+			moves |= ( 1LL << ( square + 6 ) ) & Squares;
 		if( rank != 0 )
-			moves |= ( 1 << ( square - 10 ) ) & Squares;
+			moves |= ( 1LL << ( square - 10 ) ) & Squares;
 	}
 	return moves;
 }
@@ -177,54 +179,54 @@ Bitboard RookMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, signed int sq
 	Bitboard EmptySquares = ~( FriendlyPieces | EnemyPieces );
 	Bitboard OccupiedSquares = ~EmptySquares;
 	while( 63 >= x ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) ) 
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) ) 
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x += 8;
 	}
 	x = square - 8;
 	while( x >= 0 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x -= 8;
 	}
 	x = square + 1;
 	while( ( x % 8 ) != 0 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x++;
 	}
 	x = square - 1;
 	while( ( x % 8 ) != 7 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x--;
 	}
 	return moves;
@@ -235,54 +237,54 @@ Bitboard BishopMoves( Bitboard FriendlyPieces, Bitboard EnemyPieces, signed int 
 	Bitboard OccupiedSquares = FriendlyPieces | EnemyPieces;
 	signed int x = square + 9;
 	while( ( 63 >= x ) && ( x % 8 ) != 0 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x += 9;
 	}
 	x = square - 7;
 	while( ( x >= 0 ) && ( x % 8 ) != 0 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x -= 7;
 	}
 	x = square + 7;
 	while( ( 63 >= x ) && ( x % 8 ) != 7 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x += 7;
 	}
 	x = square - 9;
 	while( ( x >= 0 ) && ( x % 8 ) != 7 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( FriendlyPieces & ( 1 << x ) )
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( FriendlyPieces & ( 1LL << x ) )
 				break;
 			else {
-				moves |= ( 1 << x );
+				moves |= ( 1LL << x );
 				break;
 			}
 		}
-		moves |= ( 1 << x );
+		moves |= ( 1LL << x );
 		x -= 9;
 	}
 	return moves;
@@ -300,75 +302,75 @@ Bitboard KingMoves( Bitboard FriendlyPieces, Bitboard EnemyPieces, signed int sq
 	Bitboard OccupiedSquares = FriendlyPieces | EnemyPieces;
 	signed int x = square + 1;
 	if( ( 63 >= x ) && ( ( x % 8 ) != 0 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else 
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square - 1;
 	if( ( x >= 0 ) && ( ( x % 8 ) != 7 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else 
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square + 7;
 	if( ( 63 >= x ) && ( ( x % 8 ) != 7 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else 
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square + 8;
 	if( 63 >= x ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square + 9;
 	if( ( 63 >= x ) && ( ( x % 8 ) != 0 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square - 7;
 	if( ( x >= 0 ) && ( ( x % 8 ) != 0 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square - 8;
 	if( x >= 0 ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	x = square - 9;
 	if( ( x >= 0 ) && ( ( x % 8 ) != 7 ) ) {
-		if( OccupiedSquares & ( 1 << x ) ) {
-			if( EnemyPieces & ( 1 << x ) )
-				moves |= ( 1 << x );
+		if( OccupiedSquares & ( 1LL << x ) ) {
+			if( EnemyPieces & ( 1LL << x ) )
+				moves |= ( 1LL << x );
 		}
 		else
-			moves |= ( 1 << x );
+			moves |= ( 1LL << x );
 	}
 	return moves;
 }
@@ -383,13 +385,13 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 	EnemyPawns |= board.layer1 & ( ~board.layer2 ) & ( ~board.layer3 );
 	EnemyKnights |= ( ~board.layer1 ) & board.layer2 & ( ~board.layer3 );
 	EnemyKing |= ( ~board.layer1 ) & board.layer2 & board.layer3;
-	if( board.layer0 & ( 1 << square ) ) {
+	if( board.layer0 & ( 1LL << square ) ) {
 		EnemyPieces = ~board.layer0;
-		PawnExclusions ~= ( 1 << ( square - 8 ) ) & ( 1 << ( square - 16 ) );
+		PawnExclusions ~= ( 1LL << ( square - 8 ) ) & ( 1LL << ( square - 16 ) );
 	}
 	else {
 		EnemyPieces = board.layer0;
-		PawnExclusions ~= ( 1 << ( square + 8 ) ) & ( 1 << ( square + 16 ) );
+		PawnExclusions ~= ( 1LL << ( square + 8 ) ) & ( 1LL << ( square + 16 ) );
 	}
 	EnemyDiagonals &= EnemyPieces;
 	EnemyStraights &= EnemyPieces;
@@ -401,7 +403,7 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 		return true;
 	if( EnemyStraights & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) )
 		return true;
-	if( EnemyPawns & PawnMoves( EnemyPieces, FriendlyPieces, square, board.layer0 & ( 1 << square ), 0x0000 ) & PawnExclusions )
+	if( EnemyPawns & PawnMoves( EnemyPieces, FriendlyPieces, square, board.layer0 & ( 1LL << square ), 0x0000 ) & PawnExclusions )
 		return true;
 	if( EnemyKnights & KnightMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
@@ -413,41 +415,41 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
 	Bitboard EmptySquares ~= board.layer0 | board.layer1 | board.layer2 | board.layer3;
-	int color = board.layer0 & ( 1 << square );
+	int color = board.layer0 & ( 1LL << square );
 	if( posflags & ( WHITE_CHECK | BLACK_CHECK ) )
 		return moves;
 	if( color ) {
 		if( posflags & BLACK_KINGSIDE_CASTLE ) {
-			if( ( EmptySquares & ( 1 << ( square + 1 ) ) ) && ( EmptySquares & ( 1 << ( square + 2 ) ) ) ) {
+			if( ( EmptySquares & ( 1LL << ( square + 1 ) ) ) && ( EmptySquares & ( 1LL << ( square + 2 ) ) ) ) {
 				if( ! IsChecked( testboard, square + 1 ) ) {
 					if( ! IsChecked( testboard, square + 2 ) )
-						moves |= ( 1 << square + 2 );
+						moves |= ( 1LL << square + 2 );
 				}
 			}
 		}
 		if( posflags & BLACK_QUEENSIDE_CASTLE ) {
-			if( ( EmptySquares & ( 1 << ( square - 1 ) ) ) && ( EmptySquares & ( 1 << ( square - 2 ) ) ) && ( EmptySquares & ( 1 << ( square - 3 ) ) ) ) {
+			if( ( EmptySquares & ( 1LL << ( square - 1 ) ) ) && ( EmptySquares & ( 1LL << ( square - 2 ) ) ) && ( EmptySquares & ( 1LL << ( square - 3 ) ) ) ) {
 				if( ! IsChecked( testboard, square - 1 ) ) {
 					if( ! IsChecked( testboard, square - 2 ) ) 
-						moves |= ( 1 << square - 2 );
+						moves |= ( 1LL << square - 2 );
 				}
 			}
 		}
 	}
 	else {
 		if( posflags & WHITE_KINGSIDE_CASTLE ) {
-			if( ( EmptySquares & ( 1 << ( square + 1 ) ) ) && ( EmptySquares & ( 1 << ( square + 2 ) ) ) ) {
+			if( ( EmptySquares & ( 1LL << ( square + 1 ) ) ) && ( EmptySquares & ( 1LL << ( square + 2 ) ) ) ) {
 				if( ! IsChecked( testboard, square + 1 ) ) {
 					if( ! IsChecked( testboard, square + 2 ) )
-						moves |= ( 1 << square + 2 );
+						moves |= ( 1LL << square + 2 );
 				}
 			}
 		}
 		if( posflags & WHITE_QUEENSIDE_CASTLE ) {
-			if( ( EmptySquares & ( 1 << ( square - 1 ) ) ) && ( EmptySquares & ( 1 << ( square - 2 ) ) ) && ( EmptySquares & ( 1 << ( square - 3 ) ) ) ) {
+			if( ( EmptySquares & ( 1LL << ( square - 1 ) ) ) && ( EmptySquares & ( 1LL << ( square - 2 ) ) ) && ( EmptySquares & ( 1LL << ( square - 3 ) ) ) ) {
 				if( ! IsChecked( testboard, square - 1 ) ) {
 					if( ! IsChecked( testboard, square - 2 ) ) 
-						moves |= ( 1 << square - 2 );
+						moves |= ( 1LL << square - 2 );
 				}
 			}
 		}

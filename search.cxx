@@ -15,9 +15,7 @@
  *
  */
 
-const signed int INFINITE = 32767;
-
-const signed int NEG_INFINITE = -32768;
+#include "search.hxx"
 
 signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE, int depth = 0, bool IsMaximiser, const Position& pos ) {
 	int moves = 0;
