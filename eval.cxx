@@ -95,9 +95,9 @@ signed int PawnStructure( Bitboard skeleton ) {
 			if( !( skeleton & EmptyFile[ 1 ] ) )	// Isolated pawn 
 				eval -= 10;
 			else {
-				if( skeleton & ( 1 << ( square + 9 ) ) ) // Backwards pawn
+				if( skeleton & ( 1LL << ( square + 9 ) ) ) // Backwards pawn
 					eval -= 12;
-				if( skeleton & ( 1 << ( square + 1 ) ) ) // Connected pawn
+				if( skeleton & ( 1LL << ( square + 1 ) ) ) // Connected pawn
 					eval += 15;
 			}
 		}
@@ -105,9 +105,9 @@ signed int PawnStructure( Bitboard skeleton ) {
 			if( !( skeleton & EmptyFile[ 6 ] ) )
 				eval -= 10;
 			else {
-				if( skeleton & ( 1 << ( square + 7 ) ) )
+				if( skeleton & ( 1LL << ( square + 7 ) ) )
 					eval -= 12;
-				if( skeleton & ( 1 << ( square - 1 ) ) )
+				if( skeleton & ( 1LL << ( square - 1 ) ) )
 					eval += 15;
 			}
 		}
@@ -115,17 +115,17 @@ signed int PawnStructure( Bitboard skeleton ) {
 			if( !( ( skeleton & EmptyFile[ file + 1 ] ) || ( skeleton & EmptyFile[ file - 1 ] ) ) )
 				eval -= 10;
 			else {
-				if( skeleton & ( 1 << ( square + 9 ) ) )
+				if( skeleton & ( 1LL << ( square + 9 ) ) )
 					eval -= 12;
-				if( skeleton & ( 1 << ( square + 7 ) ) )
+				if( skeleton & ( 1LL << ( square + 7 ) ) )
 					eval -= 12;
-				if( skeleton & ( 1 << ( square + 1 ) ) )
+				if( skeleton & ( 1LL << ( square + 1 ) ) )
 					eval += 15;
-				if( skeleton & ( 1 << ( square - 1 ) ) )
+				if( skeleton & ( 1LL << ( square - 1 ) ) )
 					eval += 15;
 			}
 		}
-		if( skeleton & ( 1 << ( square + 8 ) ) ) // Doubled pawn
+		if( skeleton & ( 1LL << ( square + 8 ) ) ) // Doubled pawn
 			eval -= 45;
 		test &= test - 1;
 	}

@@ -56,6 +56,8 @@
 #ifndef INCLUDE_BOARDREP_HXX
 #define INCLUDE_BOARDREP_HXX
 
+#include <cstdint>
+
 const int NO_PIECE = 0;
 const int INVALID = 1;
 const int WHITE_PAWN = 2;
@@ -88,7 +90,7 @@ const int BLACK_KING = 13;
  * 	D 1101 Black King
  */
 
-typedef long long unsigned int Bitboard;
+typedef uint64_t Bitboard;
 
 struct BoardRep {
 	Bitboard layer0;
@@ -116,7 +118,7 @@ const BoardRep START_BOARD = {
  * 0x957DB759333333330000000000000000000000000000000022222222846CA648
  */
 
-typedef short unsigned int BitFlags;
+typedef uint16_t BitFlags;
 //	Position Flags:
 //       0         123456      7        8       9       A       B        C          D           E              F
 //| Ep on board | Ep square | WO-O | WO-O-O | BO-O | BO-O-O | Wcheck | Bcheck | Game over | Game Drawn | White to move |
