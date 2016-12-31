@@ -25,6 +25,7 @@
  */
 
 #include "moves.hxx"
+#include "boardrep.hxx"
 
 void MakeMove( Position& pos, MoveRep move ) {
 	BoardRep& board = 
@@ -72,12 +73,14 @@ void MakeMove( Position& pos, MoveRep move ) {
 			kingpos = i;
 	}
 	pos.flags &= ~( WHITE_CHECK | BLACK_CHECK );
+	/* Temporarily removed for unit testing
 	if( IsChecked( board, king ) ) {
 		if( color )
 			pos.flags |= BLACK_CHECK;
 		else
 			pos.flags |= WHITE_CHECK;
 	}
+	*/
 	if( pos.flags & 0x0780 ) {	// 0x0780 is all the castle status bits
 		if( start == 4 )	// 4 = e1
 			pos.flags &= ~( WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE );
@@ -126,7 +129,8 @@ MoveNode* AddNode( MoveNode* p, MoveRep move ) {
 }
 
 void RemoveNextNode( MoveNode* p ) {
-	MoveNode* q, r = p->nxt;
+	MoveNode* q = p->nxt;
+	MoveNode* r = q;
 	if( q->nxt != NULL )
 		q = q->nxt;
 	delete r;

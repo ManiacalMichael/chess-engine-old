@@ -99,13 +99,15 @@
  */
  
 #include "movegen.hxx"
+#include "moves.hxx"
+#include "boardrep.hxx"
 
 Bitboard PawnMoves( Bitboard EnemyPieces, Bitboard FriendlyPieces, int square, int color, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
-	Bitboard EmptySquares = ~( EnemyPieces | FreindlyPieces );
+	Bitboard EmptySquares = ~( EnemyPieces | FriendlyPieces );
 	int file = square % 8;
 	int rank = square / 8;
-	int epsquare = ( posflags & EP_MASK ) >> 1;
+	int epsquare = ( posflags & EN_PASSANT ) >> 1;
 	if( color ) {
 		if( ( rank == 6 ) && ( ( 1LL << ( square - 8 ) ) & EmptySquares ) )
 			moves |= ( 1LL << ( square - 16 ) ) & EmptySquares;
@@ -386,19 +388,19 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 	EnemyKnights |= ( ~board.layer1 ) & board.layer2 & ( ~board.layer3 );
 	EnemyKing |= ( ~board.layer1 ) & board.layer2 & board.layer3;
 	if( board.layer0 & ( 1LL << square ) ) {
-		EnemyPieces = ~board.layer0;
-		PawnExclusions ~= ( 1LL << ( square - 8 ) ) & ( 1LL << ( square - 16 ) );
+		EnemyPieces = ( ~board.layer0 ) & OccupiedSquares;
+		PawnExclusions = ~( 1LL << ( square - 8 ) ) & ( 1LL << ( square - 16 ) );
 	}
 	else {
 		EnemyPieces = board.layer0;
-		PawnExclusions ~= ( 1LL << ( square + 8 ) ) & ( 1LL << ( square + 16 ) );
+		PawnExclusions = ~( 1LL << ( square + 8 ) ) & ( 1LL << ( square + 16 ) );
 	}
 	EnemyDiagonals &= EnemyPieces;
 	EnemyStraights &= EnemyPieces;
 	EnemyPawns &= EnemyPieces;
 	EnemyKnights &= EnemyPieces;
 	EnemyKing &= EnemyPieces;
-	FriendlyPieces = ~EnemyPieces & OccupiedSquares;
+	FriendlyPieces = ( ~EnemyPieces ) & OccupiedSquares;
 	if( EnemyDiagonals & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) )
 		return true;
 	if( EnemyStraights & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) )
@@ -407,30 +409,30 @@ bool IsChecked( const BoardRep& board, signed int square ) {
 		return true;
 	if( EnemyKnights & KnightMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
-	if( EnemyKings & KingMoves( EnemyPieces, FriendlyPieces, square ) )
+	if( EnemyKing & KingMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
 	return false;
 }
 
 Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
-	Bitboard EmptySquares ~= board.layer0 | board.layer1 | board.layer2 | board.layer3;
+	Bitboard EmptySquares = ~board.layer0 | board.layer1 | board.layer2 | board.layer3;
 	int color = board.layer0 & ( 1LL << square );
 	if( posflags & ( WHITE_CHECK | BLACK_CHECK ) )
 		return moves;
 	if( color ) {
 		if( posflags & BLACK_KINGSIDE_CASTLE ) {
 			if( ( EmptySquares & ( 1LL << ( square + 1 ) ) ) && ( EmptySquares & ( 1LL << ( square + 2 ) ) ) ) {
-				if( ! IsChecked( testboard, square + 1 ) ) {
-					if( ! IsChecked( testboard, square + 2 ) )
+				if( ! IsChecked( board, square + 1 ) ) {
+					if( ! IsChecked( board, square + 2 ) )
 						moves |= ( 1LL << square + 2 );
 				}
 			}
 		}
 		if( posflags & BLACK_QUEENSIDE_CASTLE ) {
 			if( ( EmptySquares & ( 1LL << ( square - 1 ) ) ) && ( EmptySquares & ( 1LL << ( square - 2 ) ) ) && ( EmptySquares & ( 1LL << ( square - 3 ) ) ) ) {
-				if( ! IsChecked( testboard, square - 1 ) ) {
-					if( ! IsChecked( testboard, square - 2 ) ) 
+				if( ! IsChecked( board, square - 1 ) ) {
+					if( ! IsChecked( board, square - 2 ) ) 
 						moves |= ( 1LL << square - 2 );
 				}
 			}
@@ -439,16 +441,16 @@ Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflag
 	else {
 		if( posflags & WHITE_KINGSIDE_CASTLE ) {
 			if( ( EmptySquares & ( 1LL << ( square + 1 ) ) ) && ( EmptySquares & ( 1LL << ( square + 2 ) ) ) ) {
-				if( ! IsChecked( testboard, square + 1 ) ) {
-					if( ! IsChecked( testboard, square + 2 ) )
+				if( ! IsChecked( board, square + 1 ) ) {
+					if( ! IsChecked( board, square + 2 ) )
 						moves |= ( 1LL << square + 2 );
 				}
 			}
 		}
 		if( posflags & WHITE_QUEENSIDE_CASTLE ) {
 			if( ( EmptySquares & ( 1LL << ( square - 1 ) ) ) && ( EmptySquares & ( 1LL << ( square - 2 ) ) ) && ( EmptySquares & ( 1LL << ( square - 3 ) ) ) ) {
-				if( ! IsChecked( testboard, square - 1 ) ) {
-					if( ! IsChecked( testboard, square - 2 ) ) 
+				if( ! IsChecked( board, square - 1 ) ) {
+					if( ! IsChecked( board, square - 2 ) ) 
 						moves |= ( 1LL << square - 2 );
 				}
 			}
@@ -459,7 +461,8 @@ Bitboard CastleMoves( const BoardRep& board, signed int square, BitFlags posflag
 
 MoveNode* GenMoves( Position& pos ) {
 	MoveNode* movelist = new MoveNode;
-	MoveNode* p, q = movelist;
+	MoveNode* p = movelist;
+	MoveNode* q = p;
 	const BoardRep board = pos.board;
 	const BitFlags posflags = pos.flags;
 	int piece, type, color;
@@ -542,7 +545,7 @@ MoveNode* GenMoves( Position& pos ) {
 		q = p->nxt;
 		MakeMove( testpos, q->move );
 		if( testpos.flags & FriendlyCheck )
-			DeleteNextNode( p );
+			RemoveNextNode( p );
 		testpos = pos;
 		p = p->nxt;
 	}

@@ -90,6 +90,8 @@ const int BLACK_KING = 13;
  * 	D 1101 Black King
  */
 
+const char PieceDisplay[ 16 ] = { '.', '%', 'P', 'p', 'N', 'n', 'B', 'b', 'R', 'r', 'Q', 'q', 'K', 'k', '%', '%' };
+
 typedef uint64_t Bitboard;
 
 struct BoardRep {

@@ -2,6 +2,7 @@
 #define INCLUDE_MOVES_HXX
 
 #include "boardrep.hxx"
+#include <cstddef>
 
 typedef short unsigned int MoveRep;
 /*
@@ -23,12 +24,12 @@ const MoveRep START_SQUARE_MASK = 0x003F;
 const MoveRep END_SQUARE_MASK = 0x0FC0;
 
 struct MoveNode {
-	MoveNode() : nxt( NULL ) {}
+	MoveNode() : nxt( NULL ), move( 0 ) {}
 	MoveRep move;
-	Move* nxt;
+	MoveNode* nxt;
 };
 
-void MakeMove( Position, MoveRep );
+void MakeMove( Position&, MoveRep );
 
 int LS1BIndice( Bitboard );
 

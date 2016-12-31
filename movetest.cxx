@@ -1,7 +1,12 @@
 #include <iostream>
 #include "boardrep.hxx"
+#include "moves.hxx"
 
 using namespace std;
+
+MoveNode* _GenMoves();
+
+void DisplayMoveList( MoveNode* );
 
 void DisplayBoard( const Position& );
 
@@ -9,11 +14,44 @@ void WriteSquare( int );
 
 int main() {
 	Position game = START_POSITION;
-	DisplayBoard( game );
-	SetPiece( game.board, 4, NO_PIECE );
-	SetPiece( game.board, 27, WHITE_KING );
-	DisplayBoard( game );
+	MoveNode* movelist = _GenMoves();
+	DisplayMoveList( movelist );
+	cout<< LS1BIndice( 0x0000000000000001 )<< endl;
 	return 0;
+}
+
+MoveNode* _GenMoves() {
+	MoveNode* movelist = new MoveNode;
+	MoveNode* p = movelist;
+	p->move = 8 | ( 16 << 6 );
+	cout<< p->move;
+	p->nxt = new MoveNode;
+	p = p->nxt;
+	p->move = 8 | ( 24 << 6 );
+	cout<< p->move;
+	p->nxt = new MoveNode;
+	p = p->nxt;
+	p->move = 1 | ( 18 << 6 );
+	cout<< p->move;
+	return movelist;
+}
+
+void DisplayMoveList( MoveNode* movelist ) {
+	MoveNode* p = movelist;
+	Position testpos = START_POSITION;
+	cout<< p->move<< endl;
+	MakeMove( testpos, p->move );
+	DisplayBoard( testpos );
+	testpos = START_POSITION;
+	p = p->nxt;
+	cout<< p->move<< endl;
+	MakeMove( testpos, p->move );
+	DisplayBoard( testpos );
+	testpos = START_POSITION;
+	p = p->nxt;
+	cout<< p->move<< endl;
+	MakeMove( testpos, p->move );
+	DisplayBoard( testpos );
 }
 
 void DisplayBoard( const Position& pos ) {
@@ -32,8 +70,11 @@ void DisplayBoard( const Position& pos ) {
 		cout<< endl;
 	}
 	cout<< "----------------"<< endl;
-	if( pos.flags & EN_PASSANT ) 
-		cout<< "En Passant available"<< endl;
+	if( pos.flags & EN_PASSANT ) { 
+		cout<< "En Passant available on: ";
+		WriteSquare( ( pos.flags & EP_SQUARE_MASK ) >> 1 );
+		cout<< endl;
+	}
 	if( pos.flags & 0x0780 ) {
 		if( pos.flags & WHITE_KINGSIDE_CASTLE )
 			cout<< "W";
@@ -75,6 +116,5 @@ void DisplayBoard( const Position& pos ) {
 
 void WriteSquare( int square ) {
 	const char File[ 8 ] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
-	cout<< File[ square ]<< ( ( square / 8 ) + 1 );
+	cout<< File[ ( square % 8 ) ]<< ( ( square / 8 ) + 1 );
 }
-
