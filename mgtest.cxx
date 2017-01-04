@@ -5,7 +5,43 @@
 
 using namespace std;
 
-void DisplayMoveList( MoveNode* );
+const Position kvw3Bb5 = { 	// Game position of Garry Kasparov vs. The World at 3.Bb5+
+	{
+		0xfff3080400000000,
+		0x2cf308061000ef0c,
+		0x7600000200200016,
+		0x9900000000000099
+	},
+	0x1780,
+	5,
+	5
+};
+
+const Position kvw6Nf6 = {	// Position after 6... Nf6
+	{
+		0xb1fb2c0400000000,
+		0x20fb08061400eb0c,
+		0x3000240200240014,
+		0x9108000000000099
+	},
+	0x8780,
+	14,
+	0
+};
+
+const Position kvw25Bd4 = {	// Position after 25... Bd4
+	{
+		0x001a0e2018000000,
+		0x00320a6018806000,
+		0x0008044008000040,
+		0X0028000010000060
+	},
+	0x8000,
+	50,
+	3
+};
+
+void DisplayMoveList( Position&, MoveNode* );
 
 void DisplayBoard( const Position& );
 
@@ -13,18 +49,37 @@ void WriteSquare( int );
 
 int main() {
 	Position game = START_POSITION;
-	MoveNode* movelist = GenMoves( game );
-	DisplayMoveList( movelist );
+	cout<< IsChecked( kvw3Bb5.board, 60 )<< endl;
+	cout<< "Start Position: "<< endl;
+	DisplayBoard( START_POSITION );
+	cout<< endl<< "Possible moves: "<< endl;
+	DisplayMoveList( game, GenMoves( game ) );
+	cout<< endl<< "Garry Kasparov v. The World"<< endl;
+	cout<< "Position after 3.Bb5+ :"<< endl;
+	game = kvw3Bb5;
+	DisplayBoard( game );
+	cout<< endl<< "Possible moves: "<< endl;
+	DisplayMoveList( game, GenMoves( game ) );
+	game = kvw6Nf6;
+	cout<< endl<< "Position after 6... Nf6 :"<< endl;
+	DisplayBoard( game );
+	cout<< endl<< "Possible moves :"<< endl;
+	DisplayMoveList( game, GenMoves( game ) );
+	game = kvw25Bd4;
+	cout<< endl<< "Position after 25... Bd4 :"<< endl;
+	DisplayBoard( game );
+	cout<< endl<< "Possible moves:"<< endl;
+	DisplayMoveList( game, GenMoves( game ) );
 	return 0;
 }
 
-void DisplayMoveList( MoveNode* movelist ) {
+void DisplayMoveList( Position& pos, MoveNode* movelist ) {
 	MoveNode* p = movelist;
-	Position testpos = START_POSITION;
+	Position testpos = pos;
 	while( p != NULL ) {
 		MakeMove( testpos, p->move );
 		DisplayBoard( testpos );
-		testpos = START_POSITION;
+		testpos = pos;
 		p = p->nxt;
 	}
 }

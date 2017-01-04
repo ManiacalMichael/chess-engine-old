@@ -26,10 +26,10 @@
 
 #include "moves.hxx"
 #include "boardrep.hxx"
+#include "movegen.hxx"
 
 void MakeMove( Position& pos, MoveRep move ) {
-	BoardRep& board = 
-	pos.board;
+	BoardRep& board = pos.board;
 	int color, kingpos, king;
 	int start = move & START_SQUARE_MASK;
 	int end = ( move & END_SQUARE_MASK ) >> 6;
@@ -49,6 +49,16 @@ void MakeMove( Position& pos, MoveRep move ) {
 		SetPiece( board, end, WHITE_QUEEN + color );
 	else
 		SetPiece( board, end, GetPiece( board, start ) );
+	if( move & CASTLE_MOVE ) {
+		if( end == ( start + 2 ) ) { // Kingside castle
+			SetPiece( board, end + 1, NO_PIECE );
+			SetPiece( board, end - 1, WHITE_ROOK + color );
+		}
+		else {
+			SetPiece( board, end - 2, NO_PIECE );
+			SetPiece( board, end + 1, WHITE_ROOK + color );
+		}
+	}
 	if( move & EP_CAPTURE ) {
 		if( color )	// Capturing white pawn
 			SetPiece( board, end + 8, NO_PIECE );
@@ -73,14 +83,12 @@ void MakeMove( Position& pos, MoveRep move ) {
 			kingpos = i;
 	}
 	pos.flags &= ~( WHITE_CHECK | BLACK_CHECK );
-	/* Temporarily removed for unit testing
-	if( IsChecked( board, king ) ) {
+	if( IsChecked( board, kingpos ) ) {
 		if( color )
 			pos.flags |= BLACK_CHECK;
 		else
 			pos.flags |= WHITE_CHECK;
 	}
-	*/
 	if( pos.flags & 0x0780 ) {	// 0x0780 is all the castle status bits
 		if( start == 4 )	// 4 = e1
 			pos.flags &= ~( WHITE_KINGSIDE_CASTLE | WHITE_QUEENSIDE_CASTLE );
@@ -128,13 +136,11 @@ MoveNode* AddNode( MoveNode* p, MoveRep move ) {
 	return p->nxt;
 }
 
-void RemoveNextNode( MoveNode* p ) {
-	MoveNode* q = p->nxt;
-	MoveNode* r = q;
-	if( q->nxt != NULL )
-		q = q->nxt;
-	delete r;
-	p->nxt = q;
+MoveNode* RemoveNode( MoveNode* p ) {
+	MoveNode* q;
+	q = p->nxt;
+	delete p;
+	return q;
 }
 
 void DeleteMoveList( MoveNode* movelist ) {

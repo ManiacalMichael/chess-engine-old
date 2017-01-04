@@ -4,19 +4,21 @@
 #include "moves.hxx"
 #include "boardrep.hxx"
 
-Bitboard PawnMoves( Bitboard, Bitboard, int, int BitFlags );
+Bitboard PawnMoves( Bitboard, Bitboard, int, int, BitFlags );
 
 Bitboard KnightMoves( Bitboard, Bitboard, int );
 
-Bitboard RookMoves( Bitboard, Bitboard, signed int );
+Bitboard RookMoves( Bitboard, Bitboard, int );
 
-Bitboard BishopMoves( Bitboard, Bitboard, signed int );
+Bitboard BishopMoves( Bitboard, Bitboard, int );
 
-Bitboard QueenMoves( Bitboard, Bitboard, signed int );
+Bitboard QueenMoves( Bitboard, Bitboard, int );
 
-bool IsChecked( BoardRep&, signed int );
+Bitboard KingMoves( Bitboard, Bitboard, int );
 
-Bitboard CastleMoves( BoardRep&, signed int, BitFlags );
+bool IsChecked( const BoardRep&, int );
+
+Bitboard CastleMoves( BoardRep&, int, BitFlags );
 
 MoveNode* GenMoves( Position& );
 

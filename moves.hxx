@@ -37,7 +37,7 @@ MoveNode* AddMoves( MoveNode*, Bitboard, int );
 
 MoveNode* AddNode( MoveNode*, MoveRep );
 
-void RemoveNextNode( MoveNode* );
+MoveNode* RemoveNode( MoveNode* );
 
 void DeleteMoveList( MoveNode* );
 
