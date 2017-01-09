@@ -16,8 +16,10 @@
  */
 
 #include "search.hxx"
+#include "movegen.hxx"
+#include "eval.hxx"
 
-signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE, int depth = 0, bool IsMaximiser, const Position& pos ) {
+signed int MiniMax( Position& pos, bool IsMaximiser, signed int alpha = NEG_INFINITE, signed int beta = INFINITE, int depth = 0 ) {
 	int moves = 0;
 	signed int eval, best;
 	MoveNode* movelist = GenMoves( pos );
@@ -28,13 +30,13 @@ signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE,
 		moves++;
 	}
 	if( ( depth == 0 ) || ( moves == 0 ) )
-		return Evaluate( pos, moves );
+		return Evaluate( pos );
 	p = movelist;
 	if( IsMaximiser ) {
 		best = NEG_INFINITE;
 		while( ( beta > alpha ) && ( moves > 0 ) ) {
 			MakeMove( testpos, p->move );
-			eval = MiniMax( alpha, beta, depth - 1, false, testpos );
+			eval = MiniMax( testpos, false, alpha, beta, depth - 1 );
 			if( eval > best ) {
 				best = eval;
 				if( eval > alpha )
@@ -49,7 +51,7 @@ signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE,
 		best = INFINITE;
 		while( ( beta > alpha ) && ( moves > 0 ) ) {
 			MakeMove( testpos, p->move );
-			eval = MiniMax( alpha, beta, depth - 1, true, testpos );
+			eval = MiniMax( testpos, true, alpha, beta, depth - 1 );
 			if( eval < best ) {
 				best = eval;
 				if( eval < beta )
@@ -64,13 +66,14 @@ signed int MiniMax( signed int alpha = NEG_INFINITE, signed int beta = INFINITE,
 	return best;
 }
 
-MoveRep Search( const Position& pos, int depth ) {
+MoveRep Search( Position& pos, int depth ) {
 	MoveNode* movelist = GenMoves( pos );
-	MoveNode* bestmove, p;
+	MoveNode* bestmove;
+	MoveNode* p;
 	int moves = 0;
 	signed int eval, best;
-	signed int alpha = NEG_INFINITY;
-	signed int beta = INFINITY;
+	signed int alpha = NEG_INFINITE;
+	signed int beta = INFINITE;
 	Position testpos = pos;
 	MoveRep ret;
 	p = movelist;
@@ -83,7 +86,7 @@ MoveRep Search( const Position& pos, int depth ) {
 		best = alpha;
 		while( ( beta > alpha ) && ( moves > 0 ) ) {
 			MakeMove( testpos, p->move );
-			eval = MiniMax( alpha, beta, depth - 1, false, testpos );
+			eval = MiniMax( testpos, false, alpha, beta, depth - 1 );
 			if( eval > best ) {
 				best = eval;
 				bestmove = p;
@@ -99,7 +102,7 @@ MoveRep Search( const Position& pos, int depth ) {
 		best = beta;
 		while( ( beta > alpha ) && ( moves > 0 ) ) {
 			MakeMove( testpos, p->move );
-			eval = MiniMax( alpha, beta, depth - 1, true, testpos );
+			eval = MiniMax( testpos, true, alpha, beta, depth - 1 );
 			if( eval < best ) {
 				best = eval;
 				bestmove = p;

@@ -20,6 +20,7 @@
  */
 
 #include "eval.hxx"
+#include "moves.hxx"
 
 int PopCount( Bitboard bb ) {
 	int x = 0;
@@ -30,27 +31,15 @@ int PopCount( Bitboard bb ) {
 	return x;
 }
 
-signed int EvalPawns( Bitboard FriendlyPawns, Bitboard EnemyPawns, int color ) {
+signed int EvalPawns( Bitboard FriendlyPawns, Bitboard EnemyPawns ) {
 	signed int eval = 0;
-	if( color ) {
-		while( FriendlyPawns != 0x0000000000000000 ) {
-			eval += PawnRankTable[ 7 - ( LS1BIndice( ( FriendlyPawns & ( FriendlyPawns - 1 ) ) ^ FriendlyPawns ) / 8 )];
-			FreindlyPawns &= FriendlyPawns - 1;
-		}
-		while( EnemyPawns != 0x0000000000000000 ) {
-			eval -= PawnRankTable[ LS1BIndice( ( EnemyPawns & ( EnemyPawns - 1 ) ) ^ EnemyPawns ) / 8 ];
-			EnemyPawns &= EnemyPawns - 1;
-		}
+	while( FriendlyPawns != 0x0000000000000000 ) {
+		eval += PawnRankTable[ LS1BIndice( ( FriendlyPawns & ( FriendlyPawns - 1 ) ) ^ FriendlyPawns ) / 8 ];
+		FriendlyPawns &= FriendlyPawns - 1;
 	}
-	else {
-		while( FriendlyPawns != 0x0000000000000000 ) {
-			eval += PawnRankTable[ LS1BIndice( ( FriendlyPawns & ( FriendlyPawns - 1 ) ) ^ FriendlyPawns ) / 8 ];
-			FreindlyPawns &= FriendlyPawns - 1;
-		}
-		while( EnemyPawns != 0x0000000000000000 ) {
-			eval -= PawnRankTable[ 7 - ( LS1BIndice( ( EnemyPawns & ( EnemyPawns - 1 ) ) ^ EnemyPawns ) / 8 )];
-			EnemyPawns &= EnemyPawns - 1;
-		}
+	while( EnemyPawns != 0x0000000000000000 ) {
+		eval -= PawnRankTable[ 7 - ( LS1BIndice( ( EnemyPawns & ( EnemyPawns - 1 ) ) ^ EnemyPawns ) / 8 )];
+		EnemyPawns &= EnemyPawns - 1;
 	}
 	return eval;
 }
@@ -61,17 +50,17 @@ signed int EvalRooks( Bitboard FriendlyRooks, Bitboard EnemyRooks, Bitboard Occu
 	OccupiedSquares &= ~FriendlyRooks;
 	while( FriendlyRooks != 0x0000000000000000 ) {
 		square = LS1BIndice( ( FriendlyRooks & ( FriendlyRooks - 1 ) ) ^ FriendlyRooks );
-		if( !( OccupiedSquares & EmptyRank[ square / 8 ] ) ) 
+		if( !( OccupiedSquares & OpenRank[ square / 8 ] ) ) 
 			eval += 30;
-		if( !( OccupiedSquares & EmptyFile[ square % 8 ] ) )
+		if( !( OccupiedSquares & OpenFile[ square % 8 ] ) )
 			eval += 30;
 		FriendlyRooks &= FriendlyRooks - 1;
 	}
 	while( EnemyRooks != 0x0000000000000000 ) {
 		square = LS1BIndice( ( EnemyRooks & ( EnemyRooks - 1 ) ) ^ EnemyRooks );
-		if( !( OccupiedSquares & EmptyRank[ square / 8 ] ) )
+		if( !( OccupiedSquares & OpenRank[ square / 8 ] ) )
 			eval -= 30;
-		if( !( OccupiedSquares & EmptyRank[ square % 8 ] ) )
+		if( !( OccupiedSquares & OpenFile[ square % 8 ] ) )
 			eval -= 30;
 		EnemyRooks &= EnemyRooks - 1;
 	}
@@ -92,7 +81,7 @@ signed int PawnStructure( Bitboard skeleton ) {
 		square = LS1BIndice( ( test & ( test - 1 ) ) ^ test );
 		file = square % 8;
 		if( file == 0 ) {
-			if( !( skeleton & EmptyFile[ 1 ] ) )	// Isolated pawn 
+			if( !( skeleton & OpenFile[ 1 ] ) )	// Isolated pawn 
 				eval -= 10;
 			else {
 				if( skeleton & ( 1LL << ( square + 9 ) ) ) // Backwards pawn
@@ -102,7 +91,7 @@ signed int PawnStructure( Bitboard skeleton ) {
 			}
 		}
 		else if( file == 7 ) {
-			if( !( skeleton & EmptyFile[ 6 ] ) )
+			if( !( skeleton & OpenFile[ 6 ] ) )
 				eval -= 10;
 			else {
 				if( skeleton & ( 1LL << ( square + 7 ) ) )
@@ -112,7 +101,7 @@ signed int PawnStructure( Bitboard skeleton ) {
 			}
 		}
 		else {
-			if( !( ( skeleton & EmptyFile[ file + 1 ] ) || ( skeleton & EmptyFile[ file - 1 ] ) ) )
+			if( !( ( skeleton & OpenFile[ file + 1 ] ) || ( skeleton & OpenFile[ file - 1 ] ) ) )
 				eval -= 10;
 			else {
 				if( skeleton & ( 1LL << ( square + 9 ) ) )
@@ -132,8 +121,8 @@ signed int PawnStructure( Bitboard skeleton ) {
 	return eval;
 }
 
-signed int Evaluate( Position& pos, int mobility ) {
-	BoardRep& board = &pos.board;
+signed int Evaluate( Position& pos ) {
+	BoardRep& board = pos.board;
 	BoardRep notboard;
 	Bitboard EnemyPawns, FriendlyPawns, EnemyKnights, FriendlyKnights, EnemyBishops, FriendlyBishops,
 		 EnemyRooks, FriendlyRooks, EnemyQueens, FriendlyQueens, EnemyKing, FriendlyKing,
@@ -152,14 +141,14 @@ signed int Evaluate( Position& pos, int mobility ) {
 	}
 	if( pos.flags & GAME_DRAWN )
 		return 0;
-	notboard.layer0 ~= board.layer0;
-	notboard.layer1 ~= board.layer1;
-	notboard.layer2 ~= board.layer2;
-	notboard.layer3 ~= board.layer3;
+	notboard.layer0 = ~board.layer0;
+	notboard.layer1 = ~board.layer1;
+	notboard.layer2 = ~board.layer2;
+	notboard.layer3 = ~board.layer3;
 	EnemyPieces = board.layer0 | board.layer1 | board.layer2 | board.layer3;
 	OccupiedSquares = EnemyPieces;
 	EnemyPieces &= board.layer0;
-	FriendlyPieces = OccupiedSquare & ( ~EnemyPieces );
+	FriendlyPieces = OccupiedSquares & ( ~EnemyPieces );
 	EnemyPawns = board.layer1 & notboard.layer2 & notboard.layer3;
 	EnemyKnights = notboard.layer1 & board.layer2 & notboard.layer3;
 	EnemyBishops = board.layer1 & board.layer2 & notboard.layer3;
@@ -181,7 +170,7 @@ signed int Evaluate( Position& pos, int mobility ) {
 	pawns = PopCount( EnemyPawns | FriendlyPawns );
 	fbishops = PopCount( FriendlyBishops );
 	ebishops = PopCount( EnemyBishops );
-	eval += EvalPawns( FriendlyPawns, EnemyPawns, color );
+	eval += EvalPawns( FriendlyPawns, EnemyPawns );
 	eval += KnightPawnTable[ pawns ] * PopCount( FriendlyKnights );
 	eval -= KnightPawnTable[ pawns ] * PopCount( EnemyKnights );
 	eval += 30 * PopCount( FriendlyKnights & CenterSquares );
@@ -192,14 +181,13 @@ signed int Evaluate( Position& pos, int mobility ) {
 	eval -= RookPawnTable[ pawns ] * PopCount( EnemyRooks );
 	eval += 1150 * PopCount( FriendlyQueens );
 	eval -= 1150 * PopCount( EnemyQueens );
-	eval += RookEval( FriendlyRooks, EnemyRooks, OccupiedSquares );
+	eval += EvalRooks( FriendlyRooks, EnemyRooks, OccupiedSquares );
 	eval += PawnStructure( FriendlyPawns );
 	eval -= PawnStructure( EnemyPawns );
 	if( pos.moves > 90 ) {
 		eval += PopCount( FriendlyKing & CenterSquares ) * 50;
 		eval -= PopCount( EnemyKing & CenterSquares ) * 50;
 	}
-	eval += 5 * mobility;
 	if( pos.flags & ( BLACK_QUEENSIDE_CASTLE | BLACK_KINGSIDE_CASTLE ) )
 		eval += 20;
 	if( pos.flags & ( WHITE_QUEENSIDE_CASTLE | WHITE_KINGSIDE_CASTLE ) )

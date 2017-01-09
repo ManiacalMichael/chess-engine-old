@@ -40,12 +40,12 @@ const Bitboard OpenFile[ 8 ] = {
 
 int PopCount( Bitboard );
 
-signed int EvalPawns( Bitboard, Bitboard, int );
+signed int EvalPawns( Bitboard, Bitboard );
 
 signed int EvalRooks( Bitboard, Bitboard, Bitboard );
 
 signed int PawnStructure( Bitboard );
 
-signed int Evaluate( Position&, int );
+signed int Evaluate( Position& );
 
 #endif

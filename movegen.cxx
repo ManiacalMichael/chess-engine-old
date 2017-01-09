@@ -98,12 +98,9 @@
  * If the game is over and there is no check the game is drawn (stalemate)
  */
  
-#include <iostream>
 #include "movegen.hxx"
 #include "moves.hxx"
 #include "boardrep.hxx"
-
-using namespace std;
 
 //void DisplayBoard( Bitboard ); 	//Useful for testing purposes
 
