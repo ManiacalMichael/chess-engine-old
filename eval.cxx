@@ -173,8 +173,8 @@ signed int Evaluate( Position& pos ) {
 	eval += EvalPawns( FriendlyPawns, EnemyPawns );
 	eval += KnightPawnTable[ pawns ] * PopCount( FriendlyKnights );
 	eval -= KnightPawnTable[ pawns ] * PopCount( EnemyKnights );
-	eval += 30 * PopCount( FriendlyKnights & CenterSquares );
-	eval -= 30 * PopCount( EnemyKnights & CenterSquares );
+	eval += 10 * PopCount( FriendlyKnights & CenterSquares );
+	eval -= 10 * PopCount( EnemyKnights & CenterSquares );
 	eval += BishopTable[ fbishops ];
 	eval -= BishopTable[ ebishops ];
 	eval += RookPawnTable[ pawns ] * PopCount( FriendlyRooks );
@@ -188,9 +188,5 @@ signed int Evaluate( Position& pos ) {
 		eval += PopCount( FriendlyKing & CenterSquares ) * 50;
 		eval -= PopCount( EnemyKing & CenterSquares ) * 50;
 	}
-	if( pos.flags & ( BLACK_QUEENSIDE_CASTLE | BLACK_KINGSIDE_CASTLE ) )
-		eval += 20;
-	if( pos.flags & ( WHITE_QUEENSIDE_CASTLE | WHITE_KINGSIDE_CASTLE ) )
-		eval -= 20;
 	return eval;
 }

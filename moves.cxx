@@ -33,13 +33,15 @@ void MakeMove( Position& pos, MoveRep move ) {
 	int color, kingpos, king;
 	int start = move & START_SQUARE_MASK;
 	int end = ( move & END_SQUARE_MASK ) >> 6;
+	if( !( move ) )
+		return;
 	if( pos.flags & WHITE_TO_MOVE )
 		color = 0;
 	else
 		color = 1;
 	if( ( GetPiece( board, start ) / 2 ) == 1 )
 		pos.fiftymove = 0;
-	else if( GetPiece( board, start ) != NO_PIECE )
+	else if( GetPiece( board, end ) != NO_PIECE )
 		pos.fiftymove = 0;
 	else
 		pos.fiftymove++;
@@ -66,6 +68,7 @@ void MakeMove( Position& pos, MoveRep move ) {
 			SetPiece( board, end - 8, NO_PIECE );
 	}
 	pos.flags &= ~EN_PASSANT;
+	pos.flags &= ~( 63 << 1 );
 	if( ( GetPiece( board, start ) / 2 ) == 1 ) {
 		if( end == ( start + 16 ) ) {	// Set white ep
 			pos.flags |= EN_PASSANT;
@@ -77,17 +80,19 @@ void MakeMove( Position& pos, MoveRep move ) {
 		}
 	}
 	SetPiece( board, start, NO_PIECE );
-	king = WHITE_KING + color;
+	king = BLACK_KING - color;	// Change color to check if next player is in check
 	for( int i = 0; i < 64; i++ ) {
-		if( GetPiece( board, i ) == king )
+		if( GetPiece( board, i ) == king ) {
 			kingpos = i;
+			break;
+		}
 	}
 	pos.flags &= ~( WHITE_CHECK | BLACK_CHECK );
 	if( IsChecked( board, kingpos ) ) {
 		if( color )
-			pos.flags |= BLACK_CHECK;
-		else
 			pos.flags |= WHITE_CHECK;
+		else
+			pos.flags |= BLACK_CHECK;
 	}
 	if( pos.flags & 0x0780 ) {	// 0x0780 is all the castle status bits
 		if( start == 4 )	// 4 = e1
@@ -102,6 +107,10 @@ void MakeMove( Position& pos, MoveRep move ) {
 			pos.flags &= ~BLACK_QUEENSIDE_CASTLE;
 		else if( start == 63 )	// 63 = h8
 			pos.flags &= ~BLACK_KINGSIDE_CASTLE;
+	}
+	if( pos.fiftymove >= 100 ) {
+		pos.flags |= GAME_OVER;
+		pos.flags |= GAME_DRAWN;
 	}
 	pos.moves++;
 	pos.flags ^= WHITE_TO_MOVE;

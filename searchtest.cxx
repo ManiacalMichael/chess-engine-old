@@ -56,8 +56,8 @@ int main() {
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
 	DisplayBoard( testpos );
-	cout<< "Searching depth 10..."<< endl;
-	best = Search( game, 10 );
+	cout<< "Searching depth 6..."<< endl;
+	best = Search( game, 6 );
 	testpos = game;
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
@@ -70,8 +70,8 @@ int main() {
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
 	DisplayBoard( testpos );
-	cout<< "Searching depth 10..."<< endl;
-	best = Search( game, 10 );
+	cout<< "Searching depth 6..."<< endl;
+	best = Search( game, 6 );
 	testpos = game;
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
@@ -84,8 +84,8 @@ int main() {
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
 	DisplayBoard( testpos );
-	cout<< "Searching depth 10..."<< endl;
-	best = Search( game, 10 );
+	cout<< "Searching depth 6..."<< endl;
+	best = Search( game, 6 );
 	testpos = game;
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
@@ -98,8 +98,8 @@ int main() {
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;
 	DisplayBoard( testpos );
-	cout<< "Searching depth 10..."<< endl;
-	best = Search( game, 10 );
+	cout<< "Searching depth 6..."<< endl;
+	best = Search( game, 6 );
 	testpos = game;
 	MakeMove( testpos, best );
 	cout<< "Engine recomended: "<< endl;

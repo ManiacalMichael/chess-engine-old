@@ -386,8 +386,8 @@ bool IsChecked( const BoardRep& board, int square ) {
 	OccupiedSquares = board.layer1 | board.layer2 | board.layer3;
 	EnemyDiagonals = board.layer1 & board.layer2 & ( ~board.layer3 ); // Bishops of both colors
 	EnemyDiagonals |= board.layer1 & ( ~board.layer2 ) & board.layer3; // Queens
-	EnemyStraights |= board.layer1 & ( ~board.layer2 ) & board.layer3;
-	EnemyStraights = ( ~board.layer1 ) & ( ~board.layer2 ) & board.layer3; //Rooks
+	EnemyStraights = board.layer1 & ( ~board.layer2 ) & board.layer3;
+	EnemyStraights |= ( ~board.layer1 ) & ( ~board.layer2 ) & board.layer3; //Rooks
 	EnemyPawns = board.layer1 & ( ~board.layer2 ) & ( ~board.layer3 );
 	EnemyKnights = ( ~board.layer1 ) & board.layer2 & ( ~board.layer3 );
 	EnemyKing = ( ~board.layer1 ) & board.layer2 & board.layer3;
@@ -405,9 +405,9 @@ bool IsChecked( const BoardRep& board, int square ) {
 	EnemyKnights &= EnemyPieces;
 	EnemyKing &= EnemyPieces;
 	FriendlyPieces = ( ~EnemyPieces ) & OccupiedSquares;
-	if( EnemyDiagonals & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) ) 
+	if( EnemyDiagonals & BishopMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
-	if( EnemyStraights & ( BishopMoves( EnemyPieces, FriendlyPieces, square ) | QueenMoves( EnemyPieces, FriendlyPieces, square ) ) ) 
+	if( EnemyStraights & RookMoves( EnemyPieces, FriendlyPieces, square ) )
 		return true;
 	if( EnemyPawns & PawnMoves( EnemyPieces, FriendlyPieces, square, board.layer0 & ( 1LL << square ), 0x0000 ) & PawnExclusions ) 
 		return true;
@@ -421,7 +421,9 @@ bool IsChecked( const BoardRep& board, int square ) {
 Bitboard CastleMoves( const BoardRep& board, int square, BitFlags posflags ) {
 	Bitboard moves = 0x0000000000000000;
 	Bitboard EmptySquares = ~( board.layer0 | board.layer1 | board.layer2 | board.layer3 );
-	int color = board.layer0 & ( 1LL << square );
+	int color = 0;
+	if( board.layer0 & ( 1LL << square ) )
+		color = 1;
 	if( posflags & ( WHITE_CHECK | BLACK_CHECK ) )
 		return moves;
 	if( color ) {
@@ -490,6 +492,7 @@ MoveNode* GenMoves( Position& pos ) {
 	EnemyKing &= EnemyPieces;
 	FriendlyPieces = OccupiedSquares & ( ~EnemyPieces );
 	FriendlyPieces |= EnemyKing;	// Prevents pieces from capturing a king
+	EnemyPieces ^= EnemyKing;
 	for( int i = 0; i < 64; i++ ) {
 		piece = GetPiece( board, i );
 		type = piece / 2;
@@ -522,6 +525,7 @@ MoveNode* GenMoves( Position& pos ) {
 					p->move |= PROMOTION_TO_QUEEN;
 					q->nxt = p->nxt;
 					p->nxt = q;
+					p = p->nxt;
 				}
 			}
 			else {
@@ -531,6 +535,7 @@ MoveNode* GenMoves( Position& pos ) {
 					p->move |= PROMOTION_TO_QUEEN;
 					q->nxt = p->nxt;
 					p->nxt = q;
+					p = p->nxt;
 				}
 			}
 			if( ( ( p->move & END_SQUARE_MASK ) >> 6 ) == ( posflags & EP_SQUARE_MASK ) ) // If this an ep capture... 
@@ -551,6 +556,7 @@ MoveNode* GenMoves( Position& pos ) {
 			p->nxt = RemoveNode( q );
 			break;
 		}
+		testpos.flags ^= WHITE_TO_MOVE;		// MakeMove only checks player NOT to move
 		MakeMove( testpos, q->move );
 		if( testpos.flags & FriendlyCheck ) {
 			p->nxt = RemoveNode( q );

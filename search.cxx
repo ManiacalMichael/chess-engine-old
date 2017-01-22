@@ -29,8 +29,10 @@ signed int MiniMax( Position& pos, bool IsMaximiser, signed int alpha = NEG_INFI
 		p = p->nxt;
 		moves++;
 	}
-	if( ( depth == 0 ) || ( moves == 0 ) )
+	if( ( depth == 0 ) || ( moves == 0 ) ) {
+		DeleteMoveList( movelist );
 		return Evaluate( pos );
+	}
 	p = movelist;
 	if( IsMaximiser ) {
 		best = NEG_INFINITE;
@@ -77,6 +79,9 @@ MoveRep Search( Position& pos, int depth ) {
 	Position testpos = pos;
 	MoveRep ret;
 	p = movelist;
+	if( movelist == NULL ) {
+		return 0x0000;
+	}
 	while( p != NULL ) {
 		p = p->nxt;
 		moves++;
